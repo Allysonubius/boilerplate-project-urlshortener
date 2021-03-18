@@ -20,24 +20,45 @@ app.use(bodyParser.urlencoded({
     extended: false
 }))
 
+const links = [];
+let id = 0;
+
 app.post('/api/shorturl/new', (req, res) => {
     const { url } = req.body;
+    console.log(url);
+    const noHTTPSUrl = url.replace(/^https?:\/\//, '');
 
     // check if this url is valid
-    dns.lookup(url, (err, address, family) => {
-
-        console.log('err', err);
-        console.log('address', address);
-        console.log('family', family);
-
+    dns.lookup(noHTTPSUrl, (err) => {
         if (err) {
             return res.json({
                 error: "invalid URL"
             });
+        } else {
+            //increment
+            id++;
+            //create new entry for ou arr
+            const link = {
+                original_url: url,
+                short_url: `${id}`
+            }
+            links.push(link)
+                //return this new entry
+            return res.json(link)
         }
     })
+})
 
-    //dns.lookup(host, cb)
+app.get('/api/shorturl/:id', (req, res) => {
+    const { id } = req.query;
+    const link = links.find(link => link.id === id);
+    if (link) {
+        return res.redirect(link.original_url);
+    } else {
+        return res.json({
+            error: "No short url"
+        })
+    }
 })
 
 // Your first API endpoint
@@ -46,5 +67,7 @@ app.get('/api/hello', function(req, res) {
 });
 
 app.listen(port, function() {
-    console.log(`Listening on port ${port}`);
+    console.log(`
+                                    Listening on port $ { port }
+                                    `);
 });
